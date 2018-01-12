@@ -20,6 +20,7 @@ class WPIToolsPlugin implements Plugin<Project> {
         def wpi = project.extensions.getByType(WPIExtension)
         project.dependencies.add("wpiTools", "edu.wpi.first.wpilib:SmartDashboard:${wpi.smartDashboardVersion}")
         project.dependencies.add("wpiTools", "edu.wpi.first.shuffleboard:app:${wpi.shuffleboardVersion}")
+        project.dependencies.add("wpiTools", ":RobotBuilder:${wpi.robotBuilderVersion}")
 
         smartDashboardDirectory().mkdirs()
         shuffleboardDirectory().mkdirs()
@@ -51,6 +52,18 @@ class WPIToolsPlugin implements Plugin<Project> {
                 task.launch(jvm, "-jar", jarfiles.first().absolutePath)
             }
         }
+
+        project.tasks.create("robotbuilder", ExternalLaunchTask) { ExternalLaunchTask task ->
+            task.group = "GradleRIO"
+            task.description = "Launch RobotBuilder"
+
+            task.doLast {
+                def config = project.configurations.getByName("wpiTools")
+                Set<File> jarfiles = config.files(config.dependencies.find { d -> d.group == "RobotBuilder" })
+                task.workingDir = robotBuilderDirectory()
+                task.launch(jvm, "-jar", jarfiles.first().absolutePath)
+            }
+        }
     }
 
     public static File smartDashboardDirectory() {
@@ -59,5 +72,9 @@ class WPIToolsPlugin implements Plugin<Project> {
 
     public static File shuffleboardDirectory() {
         return new File(GradleRIOPlugin.globalDirectory, "Shuffleboard")
+    }
+
+    public static File robotBuilderDirectory() {
+        return new File(GradleRIOPlugin.globalDirectory, "RobotBuilder")
     }
 }
